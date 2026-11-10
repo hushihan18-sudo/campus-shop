@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>User Registration - Campus Shop</title>
+  <style>
+    body { font-family: sans-serif; background-color: #f8f9fa; }
+    .container { max-width: 400px; margin: 50px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 10px; }
+    input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+    button { margin-top: 15px; width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .msg { color: red; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Campus Store - Registration</h2>
+    <% if (message) { %>
+      <p class="msg"><%= message %></p>
+    <% } %>
+    <form action="/register" method="POST">
+      <label>name</label>
+      <input type="text" name="nickname" required>
+      
+      <label>email</label>
+      <input type="email" name="email" required>
+      
+      <label>password</label>
+      <input type="password" name="password" required>
+      
+      <label>contact</label>
+      <input type="text" name="contact">
+      
+      <button type="submit">Registration</button>
+    </form>
+    <p style="margin-top:10px;">Do you already have an account?<a href="/login">login</a></p>
+  </div>
+</body>
+</html>

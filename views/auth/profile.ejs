@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<%- include('../partials/navbar') %>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Campus Store - My Profile</title>
+  <style>
+    body { font-family: sans-serif; background-color: #f8f9fa; }
+    .container { max-width: 450px; margin: 50px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 12px; }
+    input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    input[readonly] { background: #eee; color: #666; }
+    button { margin-top: 18px; width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .msg { color: red; margin-bottom: 10px; }
+    .ok { color: green; margin-bottom: 10px; }
+    .hint { color: #888; font-size: 12px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>My Profile</h2>
+
+    <% if (message) { %><p class="msg"><%= message %></p><% } %>
+    <% if (success) { %><p class="ok"><%= success %></p><% } %>
+
+    <form action="/profile" method="POST">
+        <form action="/profile" method="POST">
+      <label>Email</label>
+      <input type="email" value="<%= user.email %>" readonly>
+
+      <label>Nickname</label>
+      <input type="text" name="nickname" value="<%= user.nickname || '' %>" required>
+
+      <label>Contact</label>
+      <input type="text" name="contact" value="<%= user.contact || '' %>">
+
+      <label>New Password</label>
+      <input type="password" name="password" placeholder="Leave blank to keep current password">
+      <p class="hint">Only fill this if you want to change your password.</p>
+
+      <button type="submit">Update Profile</button>
+    </form>
+
+  </div>
+</body>
+</html>
