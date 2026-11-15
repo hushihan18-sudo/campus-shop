@@ -4,7 +4,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
-const csrf = require('csurf');
 const path = require('path');
 require('dotenv').config();
 
@@ -59,14 +58,13 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// 6. CSRF 防护（暂时关闭）
-//    开启条件：login.ejs / register.ejs / profile.ejs
-//    的表单里都加上：
-//    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-//    并且在渲染这些页面的路由里传 csrfToken: req.csrfToken()
 // ============================================
-const csrfProtection = csrf({ cookie: true });
-// app.use(csrfProtection);
+// 6. CSRF 防护
+// 商品表单在 routes/products.js 中使用基于 Session 的 CSRF。
+// 此处未启用全局 CSRF；其他模块需分别检查和配置。
+// ============================================
+// ============================================
+
 
 // ============================================
 // 7. 引入路由与中间件
@@ -74,7 +72,7 @@ const csrfProtection = csrf({ cookie: true });
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const { requireLogin } = require('./middleware/auth');
-
+const productRoutes = require('./routes/products');
 // ============================================
 // 8. 路由挂载
 // ============================================
@@ -88,7 +86,7 @@ app.get('/', requireLogin, (req, res) => {
 
 app.use('/', authRoutes);        // /register  /login  /logout
 app.use('/profile', profileRoutes); // /profile（查看 + 修改）
-
+app.use('/products', productRoutes);
 // 404 处理
 app.use((req, res) => {
   res.status(404).send('404 - Page Not Found');
