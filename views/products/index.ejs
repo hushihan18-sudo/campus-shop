@@ -1,1 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>products - Campus Store</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f5f6fa;
+      color: #222;
+    }
 
+    nav {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      padding: 14px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    .empty {
+      padding: 30px;
+      background: white;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/">home</a>
+
+    <% if (currentUser) { %>
+      <a href="/profile">personal information</a>
+    <% } else { %>
+      <a href="/login">login</a>
+      <a href="/register">register</a>
+    <% } %>
+  </nav>
+
+  <h1>products</h1>
+  <% if (currentUser) { %>
+  <p>
+    <a href="/products/new">Publish a Product</a>
+    |
+    <a href="/products/mine">My Products</a>
+  </p>
+  <% } else { %>
+  <p><a href="/login">Log in to publish a product</a></p>
+  <% } %>
+  <p>Show the latest 50 products</p>
+
+  <% if (products.length === 0) { %>
+    <div class="empty">
+      No products are available yet. Once the first product is published, it will appear here.
+    </div>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th>product name</th>
+          <th>category</th>
+          <th>price</th>
+          <th>status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% products.forEach(product => { %>
+          <tr>
+            <td>
+               <a href="/products/<%= product._id %>">
+                 <%= product.title %>
+               </a>
+            </td>
+            <td><%= product.category %></td>
+            <td>¥<%= Number(product.price).toFixed(2) %></td>
+            <td>
+              <%= product.status === 'sold' ? 'sold ' : 'available' %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</body>
+</html>
