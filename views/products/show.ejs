@@ -62,6 +62,38 @@
     .muted {
       color: #666;
     }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin: 22px 0;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #f0f2f6;
+      color: #52627a;
+    }
+
+    .btn:hover {
+      background: #e4e8ef;
+    }
+
+    .btn-primary {
+      background: #3978db;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2865c4;
+    }
   </style>
 </head>
 
@@ -91,6 +123,32 @@
       <strong>Status:</strong>
       <%= product.status === 'sold' ? 'Sold' : 'Available' %>
     </p>
+
+    <div class="actions">
+      <% if (product.status === 'available' && String(product.seller) !== String(currentUser._id)) { %>
+        <form action="/cart/add/<%= product._id %>" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <button type="submit" class="btn btn-primary">
+            🛒 Add to Cart
+          </button>
+        </form>
+        <% } %>
+
+      <form action="/favourites/toggle" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="productId" value="<%= product._id %>">
+        <input type="hidden" name="back" value="/products/<%= product._id %>">
+
+        <button type="submit" class="btn">
+          <% if (typeof favouritedIds !== 'undefined' && favouritedIds.includes(String(product._id))) { %>
+            ★ Unfavourite
+          <% } else { %>
+            ☆ Favourite
+          <% } %>
+        </button>
+      </form>
+    </div>
 
     <% if (imageUrl) { %>
       <img

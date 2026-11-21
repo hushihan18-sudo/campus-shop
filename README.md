@@ -10,7 +10,7 @@ A second-hand shopping platform for campus communities, built with **Express.js 
 |---|---|---|
 | **A** | User account & authentication | `models/User.js`, `routes/auth.js`, `routes/profile.js`, `middleware/auth.js` |
 | **B** | Product CRUD | `models/Product.js`, `routes/products.js`, `views/products/*` |
-| **C** | Shopping cart & favourites | `models/Cart.js`, `models/Favorite.js`, `routes/cart.js`, `routes/cartApi.js`, `routes/favorites.js`, `services/cartService.js`, `views/cart/*`, `views/favorites/*` |
+| **C** | Shopping cart & favourites | `models/Cart.js`, `models/Favourite.js`, `routes/cart.js`, `routes/cartApi.js`, `routes/favourite.js`, `services/cartService.js`, `services/favouriteService.js`, `views/cart/*`, `views/favourite/*` |
 | **D** | Order management | `models/Order.js`, `routes/orders.js`, `views/orders/*` |
 
 ---
@@ -28,20 +28,24 @@ A second-hand shopping platform for campus communities, built with **Express.js 
 
 **Favourites**
 - Add or remove a product from the favourites list (one click toggles both ways)
+- The Favourite / Unfavourite button is shown on the product list page and on the product detail page
 - View all favourited products on the favourites page
+- Tick several products and remove them in one go (batch delete)
 - Favourited products that have since been sold are still listed, with their current status shown
+- A product that was deleted by its seller is still listed and marked as no longer existing
 
 ### Files Owned by C
 
 ```
-models/Cart.js              Cart schema
-models/Favorite.js          Favourites schema
-services/cartService.js     Shared cart logic (also used by Member D)
-routes/cart.js              Cart page routes
-routes/cartApi.js           Cart REST API
-routes/favorites.js         Favourites page + REST API
-views/cart/index.ejs        Cart page
-views/favorites/index.ejs   Favourites page
+models/Cart.js                Cart schema
+models/Favourite.js           Favourites schema
+services/cartService.js       Shared cart logic (also used by Member D)
+services/favouriteService.js  Shared favourites logic
+routes/cart.js                Cart page routes
+routes/cartApi.js             Cart REST API
+routes/favourite.js           Favourites page + REST API
+views/cart/index.ejs          Cart page
+views/favourite/index.ejs     Favourites page
 ```
 
 ### Data Model — Cart
@@ -59,6 +63,21 @@ views/favorites/index.ejs   Favourites page
 }
 ```
 
+### Data Model — Favourite
+
+One document per favourited product, so several of them can be deleted with a single query.
+
+```js
+{
+  userId: ObjectId,        // ref: User
+  productId: ObjectId,      // ref: Product
+  createdAt: Date,          // timestamps
+  updatedAt: Date
+}
+// unique index on { userId, productId }, so the same product cannot be
+// favourited twice by the same user
+```
+
 ### Page Routes
 
 | Method | Path | Purpose |
@@ -66,8 +85,11 @@ views/favorites/index.ejs   Favourites page
 | GET | `/cart` | View the shopping cart |
 | POST | `/cart/add/:productId` | Add a product to the cart |
 | POST | `/cart/remove/:productId` | Remove a product from the cart |
-| GET | `/favorites` | View the favourites list |
-| POST | `/favorites/toggle` | Add / remove a favourite |
+| GET | `/favourites` | View the favourites list |
+| POST | `/favourites/toggle` | Add / remove a favourite |
+| POST | `/favourites/remove` | Remove one favourite |
+| POST | `/favourites/remove-batch` | Remove the favourites that were ticked |
+| POST | `/favourites/clear` | Remove every favourite |
 
 ### REST API — Cart
 
@@ -82,9 +104,11 @@ views/favorites/index.ejs   Favourites page
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/favorites` | Read the favourites list |
-| POST | `/api/favorites` | Create — add a favourite (`{ "productId": "..." }`) |
-| DELETE | `/api/favorites/:productId` | Delete — remove a favourite |
+| GET | `/api/favourites` | Read the favourites list |
+| POST | `/api/favourites` | Create — add a favourite (`{ "productId": "..." }`) |
+| PUT | `/api/favourites/:productId` | Update — set the state (`{ "favourited": true \| false }`) |
+| DELETE | `/api/favourites/:productId` | Delete — remove one favourite |
+| DELETE | `/api/favourites` | Delete — remove several favourites (`{ "productIds": ["...", "..."] }`) |
 
 ---
 
@@ -127,16 +151,25 @@ curl -b cookie.txt -X PUT http://localhost:3000/api/cart/<PRODUCT_ID> \
 curl -b cookie.txt -X DELETE http://localhost:3000/api/cart/<PRODUCT_ID>
 ```
 
-### Favourites — Read / Create / Delete
+### Favourites — Read / Create / Update / Delete
 
 ```bash
-curl -b cookie.txt http://localhost:3000/api/favorites
+curl -b cookie.txt http://localhost:3000/api/favourites
 
-curl -b cookie.txt -X POST http://localhost:3000/api/favorites \
+curl -b cookie.txt -X POST http://localhost:3000/api/favourites \
   -H "Content-Type: application/json" \
   -d "{\"productId\": \"<PRODUCT_ID>\"}"
 
-curl -b cookie.txt -X DELETE http://localhost:3000/api/favorites/<PRODUCT_ID>
+curl -b cookie.txt -X PUT http://localhost:3000/api/favourites/<PRODUCT_ID> \
+  -H "Content-Type: application/json" \
+  -d "{\"favourited\": false}"
+
+curl -b cookie.txt -X DELETE http://localhost:3000/api/favourites/<PRODUCT_ID>
+
+# batch delete, remove several favourites with one call
+curl -b cookie.txt -X DELETE http://localhost:3000/api/favourites \
+  -H "Content-Type: application/json" \
+  -d "{\"productIds\": [\"<PRODUCT_ID_1>\", \"<PRODUCT_ID_2>\"]}"
 ```
 
 ---
@@ -190,3 +223,5 @@ await cartService.clearCart(req.session.userId);
 - Products store their state in `status`: `available` or `sold`.
 - The cart page shows a notice when the current price differs from the price captured when the item was added.
 - The checkout button posts to `/orders/checkout`, which is implemented by Member D.
+- The favourites page and the favourites REST API both use `services/favouriteService.js`, so the page and the API always show the same data.
+- Every query in `services/favouriteService.js` and `services/cartService.js` filters by `userId`, so one user can never see or change the data of another user.

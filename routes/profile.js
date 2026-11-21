@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { requireLogin } = require('../middleware/auth');
 
-// 查看个人资料（受保护）
+// View the profile (protected)
 router.get('/', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
@@ -16,18 +16,18 @@ router.get('/', requireLogin, async (req, res) => {
   }
 });
 
-// 修改个人资料（受保护）
+// Update the profile (protected)
 router.post('/', requireLogin, async (req, res) => {
   try {
     const { nickname, contact, password } = req.body;
     const user = await User.findById(req.session.userId);
     if (!user) return res.redirect('/logout');
 
-    // 只更新填了内容的字段
+    // Only update the fields that were filled in
     if (nickname) user.nickname = nickname;
     if (contact !== undefined) user.contact = contact;
 
-    // 如果填了新密码，才重新哈希
+    // Only hash again when a new password was entered
     if (password && password.trim() !== '') {
       user.passwordHash = await bcrypt.hash(password, 10);
     }

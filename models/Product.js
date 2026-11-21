@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const ProductSchema = new mongoose.Schema({
-  // 商品名称
+  // Product name
   title: {
     type: String,
     required: true,
@@ -9,7 +9,7 @@ const ProductSchema = new mongoose.Schema({
     maxlength: 100
   },
 
-  // 商品描述
+  // Product description
   description: {
     type: String,
     required: true,
@@ -17,14 +17,14 @@ const ProductSchema = new mongoose.Schema({
     maxlength: 3000
   },
 
-  // 商品价格，不能为负数
+  // Product price, must not be negative
   price: {
     type: Number,
     required: true,
     min: 0
   },
 
-  // 商品分类，选项在页面与路由中统一
+  // Product category, the same options are used in the page and the route
   category: {
     type: String,
     required: true,
@@ -32,7 +32,7 @@ const ProductSchema = new mongoose.Schema({
     maxlength: 50
   },
 
-  // 图片地址：允许不填；填写时只接受 HTTP/HTTPS URL
+  // Image address: optional, only HTTP/HTTPS URLs are accepted
   imageUrl: {
     type: String,
     trim: true,
@@ -53,7 +53,7 @@ const ProductSchema = new mongoose.Schema({
     }
   },
 
-  // 卖家 ID，关联现有的 User 模型
+  // Seller id, linked to the existing User model
   seller: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -61,7 +61,7 @@ const ProductSchema = new mongoose.Schema({
     index: true
   },
 
-  // 出售状态：在售 / 已售出
+  // Sale status: on sale / sold
   status: {
     type: String,
     enum: ['available', 'sold'],

@@ -1,20 +1,21 @@
 // ============================================
-// 购物车 REST API（C 模块）
+// Cart REST API (module C)
 // ---------------------------------------------------------------
-// 作业要求提供 RESTful CRUD 服务，至少要有：
-//   GET    读
-//   POST   增
-//   PUT    改
-//   DELETE 删
+// The assignment asks for RESTful CRUD services, at least:
+//   GET    read
+//   POST   create
+//   PUT    update
+//   DELETE delete
 //
-// 这个文件提供购物车的四个接口，挂在 /api/cart：
-//   GET    /api/cart              读购物车
-//   POST   /api/cart              加入购物车
-//   PUT    /api/cart/:productId   改（更新购物车里这件商品的快照价格）
-//   DELETE /api/cart/:productId   删（移出购物车）
+// This file provides the four endpoints of the cart, mounted on /api/cart:
+//   GET    /api/cart              read the cart
+//   POST   /api/cart              add a product to the cart
+//   PUT    /api/cart/:productId   update the snapshot of one product
+//   DELETE /api/cart/:productId   remove one product
 //
-// 页面路由在 routes/cart.js，逻辑都在 services/cartService.js，
-// 所以页面操作和 API 操作永远读到的是同一个购物车。
+// The page routes live in routes/cart.js, all the logic lives in
+// services/cartService.js, so the page actions and the API actions always
+// read and write the same cart.
 // ============================================
 
 const express = require('express');
@@ -25,15 +26,15 @@ const { requireLogin } = require('../middleware/auth');
 
 const apiRouter = express.Router();
 
-// 检查是不是合法的 24 位 ObjectId
+// Check whether a value is a valid 24 character MongoDB ObjectId
 function isValidObjectId(id) {
   return typeof id === 'string' && /^[a-fA-F0-9]{24}$/.test(id);
 }
 
 // ============================================
-// READ —— 读购物车
+// READ - read the cart
 // GET /api/cart
-// 返回 { ok: true, items: [...], total: Number }
+// Returns { ok: true, items: [...], total: Number }
 // ============================================
 apiRouter.get('/', requireLogin, async (req, res, next) => {
   try {
@@ -45,10 +46,10 @@ apiRouter.get('/', requireLogin, async (req, res, next) => {
 });
 
 // ============================================
-// CREATE —— 加入购物车
+// CREATE - add a product to the cart
 // POST /api/cart
-// body: { "productId": "商品ID" }
-// 返回 201 { ok: true, items: [...], total: Number }
+// body: { "productId": "product id" }
+// Returns 201 { ok: true, items: [...], total: Number }
 // ============================================
 apiRouter.post('/', requireLogin, async (req, res, next) => {
   try {
@@ -81,12 +82,14 @@ apiRouter.post('/', requireLogin, async (req, res, next) => {
 });
 
 // ============================================
-// UPDATE —— 改购物车里的某件商品
+// UPDATE - update one product of the cart
 // PUT /api/cart/:productId
-// body: { "price": 新的价格 }   （可选，不传就按商品表现价刷新）
+// body: { "price": new price }  (optional, without it the current price
+//                                of the product is used)
 //
-// 用途：卖家改了价之后，买家在购物车里确认接受新价格。
-// 二手商品每件只有一份，所以这里改的不是"数量"，只是这件商品的快照信息。
+// Use case: the seller changed the price and the buyer confirms the new
+// price in the cart. A second hand product exists only once, so this does
+// not change a "quantity", it only updates the snapshot of this product.
 // ============================================
 apiRouter.put(
   '/:productId',
@@ -121,11 +124,13 @@ apiRouter.put(
         });
       }
 
-      // body 里传了 price 就用传的，没传就取商品表里的现价
+      // Use the price of the body when one was sent, otherwise use the
+      // current price of the product
       const newPrice = Number(req.body.price);
 
       if (!Number.isFinite(newPrice) || newPrice < 0) {
-        // 没传价格或者传的不合法，就按商品表现价刷新
+        // No price was sent or it is not valid, refresh with the current
+        // price of the product
         const product = await require('../models/Product')
           .findById(productId)
           .lean();
@@ -155,9 +160,9 @@ apiRouter.put(
 );
 
 // ============================================
-// DELETE —— 移出购物车
+// DELETE - remove one product from the cart
 // DELETE /api/cart/:productId
-// 返回 { ok: true, items: [...], total: Number }
+// Returns { ok: true, items: [...], total: Number }
 // ============================================
 apiRouter.delete(
   '/:productId',
@@ -173,7 +178,7 @@ apiRouter.delete(
         });
       }
 
-      // 用 $pull 把这件商品从购物车数组里摘掉
+      // $pull removes this product from the items array of the cart
       await Cart.updateOne(
         { userId: req.session.userId },
         {

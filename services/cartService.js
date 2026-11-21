@@ -1,37 +1,39 @@
 // ============================================
-// 购物车服务层（C 模块交付给 D 的部分）
+// Cart service layer (the part module C hands over to module D)
 // ---------------------------------------------------------------
-// D 的订单模块只需要 require 这一个文件，就能:
-//   1. 读出某个用户的购物车
-//   2. 拿到"当前真实价格"来算订单金额
-//   3. 下单成功后清空购物车
+// The order module of member D only has to require this single file to:
+//   1. read the cart of a user
+//   2. get the current real price to calculate the order amount
+//   3. clear the cart after the order was created
 //
-// 用法:
+// Usage:
 //   const cartService = require('../services/cartService');
 //   const { items, total } = await cartService.getCartForUser(userId);
 //   await cartService.clearCart(userId);
 //
-// 本文件只依赖 models/Cart.js 和 models/Product.js，
-// 不依赖任何页面路由或中间件，所以和 D 的 orders 路由不会互相干扰。
+// This file only depends on models/Cart.js and models/Product.js,
+// it does not depend on any page route or middleware, so it cannot
+// interfere with the order route of member D.
 // ============================================
 
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 
 // ============================================
-// 1. 读购物车
+// 1. Read the cart
 // ---------------------------------------------------------------
-// 返回 { items: [...], total: Number }
-// userId 就是 req.session.userId
+// Returns { items: [...], total: Number }
+// The userId is req.session.userId.
 //
-// 注意 total 是"购物车页面上显示的合计"，
-// 用的是加购那一刻存下来的价格快照。
-// 真正下单的金额请用 getCartItemsWithCurrentPrice()，原因见第 2 条。
+// Note: the total is the sum shown on the cart page, it is calculated
+// with the price snapshot taken when the product was added.
+// Use getCartItemsWithCurrentPrice() for the real order amount,
+// the reason is explained in part 2.
 // ============================================
 async function getCartForUser(userId) {
   const cart = await Cart.findOne({ userId }).lean();
 
-  // 从没买过东西的用户还没有购物车文档，返回空购物车
+  // A user who never added anything has no cart document yet
   if (!cart) {
     return { items: [], total: 0 };
   }
@@ -48,29 +50,31 @@ async function getCartForUser(userId) {
 }
 
 // ============================================
-// 2. 读购物车 + 带上商品的"当前状态和现价"
+// 2. Read the cart with the current status and price of every product
 // ---------------------------------------------------------------
-// 这个是给 D 下单用的，返回每一件商品的:
-//   productId    商品编号
-//   title        商品名
-//   imageUrl     图片
-//   currentPrice 现在的真实价格  ← 订单金额要用这个
-//   available    现在还能不能买（true/false）
-//   reason       不能买的原因（available 为 true 时是 null）
+// This one is meant for the order of member D, it returns for every item:
+//   productId    product id
+//   title        product name
+//   imageUrl     image
+//   currentPrice the real price right now  <- the order amount uses this
+//   available    can it still be bought (true / false)
+//   reason       why it cannot be bought (null when available is true)
 //
-// 为什么要重新查 Product:
-//   卖家在买家加购之后可能改价，或者把商品标成已售出。
-//   购物车里存的 price 只是加购当时的快照，直接拿来下单会算错钱。
-//   而且二手商品只有一份，如果两个人同时下单，
-//   必须当场再查一次 status，否则会出现"一物两卖"。
+// Why Product is read again:
+//   The seller may change the price after the buyer added the product, or
+//   mark the product as sold. The price stored in the cart is only a
+//   snapshot, using it for an order would calculate the wrong amount.
+//   A second hand product exists only once, so when two buyers order at the
+//   same time the status has to be checked again, otherwise the same
+//   product could be sold twice.
 //
-// 用法:
+// Usage:
 //   const cart = await cartService.getCartItemsWithCurrentPrice(userId);
 //   if (cart.items.length === 0) return res.redirect('/cart');
 //   for (const item of cart.items) {
 //     if (!item.available) return res.status(400).send(item.reason);
 //   }
-//   const amount = cart.total;   // 用当前现价算出来的合计
+//   const amount = cart.total;   // total calculated with the current prices
 // ============================================
 async function getCartItemsWithCurrentPrice(userId) {
   const { items } = await getCartForUser(userId);
@@ -79,11 +83,11 @@ async function getCartItemsWithCurrentPrice(userId) {
     return { items: [], total: 0 };
   }
 
-  // 一次性把这些商品全查出来
+  // Load every product of the cart in one query
   const productIds = items.map((item) => item.productId);
   const products = await Product.find({ _id: { $in: productIds } }).lean();
 
-  // 转成"用商品编号就能查到"的表
+  // Turn the list into a table that can be looked up by product id
   const productMap = {};
   products.forEach((p) => {
     productMap[String(p._id)] = p;
@@ -94,7 +98,7 @@ async function getCartItemsWithCurrentPrice(userId) {
   const rows = items.map((item) => {
     const product = productMap[String(item.productId)];
 
-    // 商品已经被卖家删掉了
+    // The seller deleted the product
     if (!product) {
       return {
         productId: item.productId,
@@ -106,7 +110,7 @@ async function getCartItemsWithCurrentPrice(userId) {
       };
     }
 
-    // 商品还在，但已经被别人买走了
+    // The product is still there but somebody else bought it
     if (product.status !== 'available') {
       return {
         productId: product._id,
@@ -135,12 +139,12 @@ async function getCartItemsWithCurrentPrice(userId) {
 }
 
 // ============================================
-// 3. 清空购物车
+// 3. Clear the cart
 // ---------------------------------------------------------------
-// D 在订单创建成功之后调用:
+// Member D calls this after the order was created:
 //   await cartService.clearCart(userId);
 //
-// 只清空当前这个用户的购物车，不影响别人。
+// Only the cart of this user is cleared, other users are not affected.
 // ============================================
 async function clearCart(userId) {
   await Cart.updateOne({ userId }, { $set: { items: [] } });
@@ -148,11 +152,11 @@ async function clearCart(userId) {
 }
 
 // ============================================
-// 4. 加购（可选，测试用）
+// 4. Add a product to the cart (optional, used for testing)
 // ---------------------------------------------------------------
-// D 在自己测订单流程时，可能需要往购物车里塞点东西。
-// 这个函数可以不用走页面，直接往购物车里加一件商品。
-// 用法:
+// Member D may need to put something into the cart while testing the
+// order flow. This function adds a product without going through a page.
+// Usage:
 //   const r = await cartService.addToCart(userId, productId);
 //   if (!r.ok) console.log(r.error);
 // ============================================
@@ -194,7 +198,7 @@ async function addToCart(userId, productId) {
 }
 
 // ============================================
-// 导出
+// Export
 // ============================================
 module.exports = {
   getCartForUser,

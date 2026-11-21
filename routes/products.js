@@ -5,7 +5,7 @@ const { requireLogin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// 使用现有 Session 保存 CSRF secret，不需要 cookie-parser
+// Use the existing session to store the CSRF secret, no cookie-parser needed
 const csrfProtection = csrf();
 
 const categories = [
@@ -17,7 +17,7 @@ const categories = [
   'Other'
 ];
 
-// 商品列表
+// Product list
 router.get('/', requireLogin, csrfProtection, async (req, res, next) => {
   try {
     const products = await Product.find({})
@@ -34,7 +34,7 @@ router.get('/', requireLogin, csrfProtection, async (req, res, next) => {
   }
 });
 
-// 显示发布表单
+// Show the publish form
 router.get('/new', requireLogin, csrfProtection, (req, res) => {
   res.render('products/new', {
     categories,
@@ -44,11 +44,11 @@ router.get('/new', requireLogin, csrfProtection, (req, res) => {
   });
 });
 
-// 处理发布表单
+// Handle the publish form
 router.post('/', requireLogin, csrfProtection, async (req, res, next) => {
   const body = req.body || {};
 
-  // 只接受指定字段的字符串，不直接使用整个 req.body
+  // Only accept the listed fields as strings, never the whole req.body
   const text = (value) =>
     typeof value === 'string' ? value.trim() : '';
 
@@ -77,7 +77,7 @@ router.post('/', requireLogin, csrfProtection, async (req, res, next) => {
     return showError('Please enter a description of 1–3000 characters.');
   }
 
-  // 最多保留两位小数，不允许负数或非数字
+  // At most two decimal places, no negative numbers and no other characters
   if (!/^\d+(\.\d{1,2})?$/.test(values.price)) {
     return showError('Enter a non-negative price with up to two decimal places.');
   }
@@ -115,7 +115,7 @@ router.post('/', requireLogin, csrfProtection, async (req, res, next) => {
       category: values.category,
       imageUrl: values.imageUrl,
 
-      // 卖家只能来自登录 Session，不能由表单指定
+      // The seller always comes from the session, it cannot be set by the form
       seller: req.session.userId,
       status: 'available'
     });
@@ -130,7 +130,7 @@ router.post('/', requireLogin, csrfProtection, async (req, res, next) => {
   }
 });
 
-// 我的商品：只查询当前登录用户发布的商品
+// My products: only the products published by the logged in user
 router.get(
   '/mine',
   requireLogin,
@@ -152,7 +152,7 @@ router.get(
     }
   }
 );
-// 显示编辑表单：只能编辑自己的商品
+// Show the edit form: a product can only be edited by its seller
 router.get(
   '/:id/edit',
   requireLogin,
@@ -161,12 +161,12 @@ router.get(
     try {
       const { id } = req.params;
 
-      // 检查商品 ID 格式
+      // Check the format of the product id
       if (!/^[a-fA-F0-9]{24}$/.test(id)) {
         return res.status(404).send('Product not found.');
       }
 
-      // 同时检查商品 ID 和卖家，避免编辑别人的商品
+      // Check the product id and the seller together, so nobody can edit a product of somebody else
       const product = await Product.findOne({
         _id: id,
         seller: req.session.userId
@@ -178,7 +178,7 @@ router.get(
         );
       }
 
-      // 复用发布页面，并回填商品信息
+      // Reuse the publish page and fill it with the product information
       res.render('products/new', {
         categories,
         values: {
@@ -198,7 +198,7 @@ router.get(
     }
   }
 );
-// 保存编辑：只能修改自己的商品
+// Save the edit: only the seller of the product can change it
 router.post(
   '/:id/edit',
   requireLogin,
@@ -215,7 +215,7 @@ router.post(
     const text = (value) =>
       typeof value === 'string' ? value.trim() : '';
 
-    // 只接受允许修改的字段
+    // Only accept the fields that are allowed to change
     const values = {
       title: text(body.title),
       description: text(body.description),
@@ -225,7 +225,7 @@ router.post(
       status: text(body.status)
     };
 
-    // 验证失败时保留输入，并继续显示编辑模式
+    // Keep the input when the validation fails and stay in edit mode
     const showError = (message) => {
       return res.status(400).render('products/new', {
         categories,
@@ -327,7 +327,7 @@ router.post(
     }
   }
 );
-// 删除商品：只能删除自己发布的商品
+// Delete a product: only the seller of the product can delete it
 router.post(
   '/:id/delete',
   requireLogin,
@@ -336,12 +336,12 @@ router.post(
     try {
       const { id } = req.params;
 
-      // 检查商品 ID 格式
+      // Check the format of the product id
       if (!/^[a-fA-F0-9]{24}$/.test(id)) {
         return res.status(404).send('Product not found.');
       }
 
-      // 在删除时同时检查商品 ID 和卖家身份
+      // Check the product id and the seller together while deleting
       const product = await Product.findOneAndDelete({
         _id: id,
         seller: req.session.userId
@@ -361,12 +361,12 @@ router.post(
 );
 
 
-// 商品详情：放在 /new 等固定路径后面
-router.get('/:id', requireLogin, async (req, res, next) => {
+// Product detail: registered after the fixed paths like /new
+router.get('/:id', requireLogin, csrfProtection, async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // 防止无效 ID 引起数据库转换错误
+    // An invalid id must not cause a database conversion error
     if (!/^[a-fA-F0-9]{24}$/.test(id)) {
       return res.status(404).send('Product not found.');
     }
@@ -379,7 +379,7 @@ router.get('/:id', requireLogin, async (req, res, next) => {
       return res.status(404).send('Product not found.');
     }
 
-    // 图片只允许 HTTP/HTTPS 地址
+    // Only HTTP/HTTPS addresses are allowed for the image
     let imageUrl = '';
 
     if (product.imageUrl) {
@@ -390,19 +390,20 @@ router.get('/:id', requireLogin, async (req, res, next) => {
           imageUrl = url.href;
         }
       } catch {
-        // 无效图片地址不展示
+        // An invalid image address is not shown
       }
     }
 
     res.render('products/show', {
       product,
-      imageUrl
+      imageUrl,
+      csrfToken: req.csrfToken()
     });
   } catch (error) {
     next(error);
   }
 });
-// 商品路由自己的 CSRF 错误提示
+// CSRF error message of the product router
 
 router.use((err, req, res, next) => {
   if (err.code === 'EBADCSRFTOKEN') {

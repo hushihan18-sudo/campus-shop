@@ -4,32 +4,32 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-// 显示注册页面
+// Show the register page
 router.get('/register', (req, res) => {
   res.render('register', { message: '' });
 });
 
-// 处理注册表单提交
+// Handle the register form
 router.post('/register', async (req, res) => {
   try {
     const { nickname, email, password, contact } = req.body;
 
-    // 简单验证
+    // Simple validation
     if (!nickname || !email || !password) {
-      return res.render('register', { message: '昵称、邮箱和密码为必填项！' });
+      return res.render('register', { message: 'Nickname, email and password are required.' });
     }
 
-    // 检查邮箱是否已存在
+    // Check whether the email is already registered
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.render('register', { message: '该邮箱已经被注册！' });
+      return res.render('register', { message: 'This email has already been registered.' });
     }
 
-    // 密码加密（哈希）
+    // Hash the password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // 存入数据库
+    // Save the user in the database
     const newUser = new User({
       nickname,
       email,
@@ -39,7 +39,7 @@ router.post('/register', async (req, res) => {
 
     await newUser.save();
     
-    // 注册成功，重定向到登录页
+    // Registered, go back to the login page
     res.redirect('/login');
 
   } catch (error) {
@@ -47,34 +47,34 @@ router.post('/register', async (req, res) => {
     res.render('register', { message: 'An error occurred during registration. Please try again.' });
   }
 });
-// 显示登录页面
+// Show the login page
 router.get('/login', (req, res) => {
     res.render('login', { message: '' });
   });
   
-  // 处理登录表单提交
+  // Handle the login form
   router.post('/login', async (req, res) => {
     try {
       const { email, password } = req.body;
   
-      // 查找用户
+      // Find the user
       const user = await User.findOne({ email });
       if (!user) {
         return res.render('login', { message: 'Email not registered!' });
       }
   
-      // 验证密码
+      // Check the password
       const isMatch = await bcrypt.compare(password, user.passwordHash);
       if (!isMatch) {
         return res.render('login', { message: 'Incorrect password!' });
       }
   
-      // 登录成功，把用户ID存入 Session
-    // 登录成功，把用户ID存入 Session
+      // Logged in, store the user id in the session
+    // Logged in, store the user id in the session
   req.session.userId = user._id;
   req.session.nickname = user.nickname;
 
-  // 显式保存 session，保存成功后再重定向
+  // Save the session explicitly, redirect after it is stored
   req.session.save((err) => {
     if (err) {
       console.error('Session save error:', err);
@@ -89,7 +89,7 @@ router.get('/login', (req, res) => {
     }
   });
   
-  // 退出登录
+  // Log out
   router.get('/logout', (req, res) => {
     req.session.destroy(() => {
       res.redirect('/login');

@@ -12,7 +12,7 @@ const csrfProtection = csrf();
 
 // =====================================
 // GET /cart
-// 显示当前用户的购物车
+// Show the cart of the current user
 // =====================================
 router.get('/', requireLogin, csrfProtection, async (req, res, next) => {
     try {
@@ -41,7 +41,7 @@ router.get('/', requireLogin, csrfProtection, async (req, res, next) => {
 
 // =====================================
 // POST /cart/add/:productId
-// 加入购物车
+// Add a product to the cart
 // =====================================
 router.post(
     '/add/:productId',
@@ -77,7 +77,7 @@ router.post(
 
 // =====================================
 // POST /cart/remove/:productId
-// 删除购物车中的商品
+// Remove a product from the cart
 // =====================================
 router.post(
     '/remove/:productId',
@@ -109,7 +109,7 @@ router.post(
     }
 );
 
-// CSRF 错误处理
+// CSRF error handling
 router.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
         return res.status(403).send(

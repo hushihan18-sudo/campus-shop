@@ -80,6 +80,7 @@
                   <th>price</th>
                   <th>status</th>
                   <th>action</th>
+                  <th>favourite</th>
                 </tr>
               </thead>
 
@@ -128,6 +129,30 @@
                               </form>
 
                               <% } %>
+                    </td>
+
+                    <td>
+                      <% if (!currentUser) { %>
+
+                        <a href="/login">Login to Save</a>
+
+                        <% } else { %>
+
+                          <form action="/favourites/toggle" method="POST">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="hidden" name="productId" value="<%= product._id %>">
+                            <input type="hidden" name="back" value="/products">
+
+                            <button type="submit">
+                              <% if (typeof favouritedIds !== 'undefined' && favouritedIds.includes(String(product._id))) { %>
+                                ★ Unfavourite
+                              <% } else { %>
+                                ☆ Favourite
+                              <% } %>
+                            </button>
+                          </form>
+
+                          <% } %>
                     </td>
                   </tr>
                   <% }); %>

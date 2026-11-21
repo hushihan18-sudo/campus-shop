@@ -1,5 +1,5 @@
 // ============================================
-// 1. 引入依赖
+// 1. Dependencies
 // ============================================
 const express = require('express');
 const mongoose = require('mongoose');
@@ -10,17 +10,17 @@ require('dotenv').config();
 const app = express();
 
 // ============================================
-// 2. 连接 MongoDB
+// 2. Connect to MongoDB
 // ============================================
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // ============================================
-// 3. 视图引擎与视图目录
-//    profile.ejs 放在 views/auth/ 下
-//    login.ejs / register.ejs 在 views/ 下
-//    所以两个目录都要注册
+// 3. View engine and view folders
+//    profile.ejs lives in views/auth/
+//    login.ejs and register.ejs live in views/
+//    so both folders have to be registered
 // ============================================
 app.set('view engine', 'ejs');
 app.set('views', [
@@ -29,14 +29,14 @@ app.set('views', [
 ]);
 
 // ============================================
-// 4. 全局中间件
+// 4. Global middleware
 // ============================================
-app.use(express.urlencoded({ extended: true }));   // 解析表单 POST 数据
-app.use(express.json());                            // 解析 JSON 数据
-app.use(express.static(path.join(__dirname, 'public'))); // 静态文件（CSS / 图片）
+app.use(express.urlencoded({ extended: true }));   // parse form POST data
+app.use(express.json());                            // parse JSON data
+app.use(express.static(path.join(__dirname, 'public'))); // static files (CSS / images)
 
 // ============================================
-// 5. Session 配置（登录状态保持）
+// 5. Session configuration (keeps the login state)
 // ============================================
 app.use(session({
   secret: process.env.SESSION_SECRET || 'campus-shop-secret',
@@ -44,11 +44,11 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24   // 1 天
+    maxAge: 1000 * 60 * 60 * 24   // 1 day
   }
 }));
 
-// 让所有 EJS 模板都能直接读到当前登录用户
+// Let every EJS template read the current logged in user
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.userId ? {
     _id: req.session.userId,
@@ -58,16 +58,13 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// ============================================
-// 6. CSRF 防护
-// 商品表单在 routes/products.js 中使用基于 Session 的 CSRF。
-// 此处未启用全局 CSRF；其他模块需分别检查和配置。
-// ============================================
+// 6. CSRF protection
+// The product forms in routes/products.js use session based CSRF.
+// Global CSRF is not enabled here, every module checks its own routes.
 // ============================================
 
-
 // ============================================
-// 7. 引入路由与中间件
+// 7. Routes and middleware
 // ============================================
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
@@ -75,12 +72,13 @@ const { requireLogin } = require('./middleware/auth');
 const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
 const cartApiRoutes = require('./routes/cartApi');
-const favoriteRoutes = require('./routes/favorites');
+const favouriteRoutes = require('./routes/favourite');
+
 // ============================================
-// 8. 路由挂载
+// 8. Route mounting
 // ============================================
 
-// 根路径：受保护，未登录会被 requireLogin 重定向到 /login
+// Root path: protected, requireLogin redirects to /login when logged out
 app.get('/', requireLogin, (req, res) => {
   res.render('home', {
     nickname: req.session.nickname || ''
@@ -88,34 +86,42 @@ app.get('/', requireLogin, (req, res) => {
 });
 
 app.use('/', authRoutes);        // /register  /login  /logout
-app.use('/profile', profileRoutes); // /profile（查看 + 修改）
+app.use('/profile', profileRoutes); // /profile (view + update)
+
+// Put the favourited product ids into res.locals.favouritedIds.
+// It has to run before the page routes, the product page uses it to
+// show the Favourite / Unfavourite button.
+app.use(favouriteRoutes.loadFavourites);
+
 app.use('/products', productRoutes);
 
-// 购物车页面路由：/cart  /cart/add/:productId  /cart/remove/:productId
+// Cart page routes: /cart  /cart/add/:productId  /cart/remove/:productId
 app.use('/cart', cartRoutes);
 
-// 购物车 REST API：GET/POST /api/cart  PUT/DELETE /api/cart/:productId
+// Cart REST API: GET/POST /api/cart  PUT/DELETE /api/cart/:productId
 app.use('/api/cart', cartApiRoutes);
 
-// 收藏夹页面路由：/favorites  /favorites/toggle
-app.use('/favorites', favoriteRoutes);
+// Favourite page routes: /favourites  /favourites/toggle
+// /favourites/remove  /favourites/remove-batch  /favourites/clear
+app.use('/favourites', favouriteRoutes);
 
-// 收藏夹 REST API：GET/POST /api/favorites  DELETE /api/favorites/:productId
-app.use('/api/favorites', favoriteRoutes.apiRouter);
+// Favourite REST API: GET/POST /api/favourites
+// PUT/DELETE /api/favourites/:productId  DELETE /api/favourites
+app.use('/api/favourites', favouriteRoutes.apiRouter);
 
-// 404 处理
+// 404 handling
 app.use((req, res) => {
   res.status(404).send('404 - Page Not Found');
 });
 
-// 全局错误处理
+// Global error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something went wrong!');
 });
 
 // ============================================
-// 9. 启动服务器
+// 9. Start the server
 // ============================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
