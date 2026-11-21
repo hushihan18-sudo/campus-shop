@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart | Campus Shop</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #202b3c;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .navbar {
+            height: 72px;
+            background: white;
+            border-bottom: 1px solid #e8edf3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 7%;
+        }
+
+        .logo {
+            font-size: 23px;
+            font-weight: 800;
+            color: #243b65;
+        }
+
+        .logo span {
+            color: #3978db;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .nav-links a {
+            color: #697586;
+        }
+
+        .nav-links a:hover,
+        .nav-links .active {
+            color: #3978db;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1120px;
+            margin: 55px auto;
+            padding: 0 24px;
+        }
+
+        .heading {
+            margin-bottom: 30px;
+        }
+
+        .heading h1 {
+            font-size: 32px;
+            margin-bottom: 9px;
+        }
+
+        .heading p {
+            color: #8490a0;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success {
+            background: #eaf8f0;
+            color: #207849;
+        }
+
+        .error {
+            background: #fff0f0;
+            color: #bd3d3d;
+        }
+
+        .cart-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 25px;
+            align-items: start;
+        }
+
+        .cart-panel,
+        .summary {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e9edf3;
+            padding: 25px;
+        }
+
+        .panel-title {
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 22px;
+        }
+
+        .item {
+            display: grid;
+            grid-template-columns: 115px 1fr auto;
+            gap: 20px;
+            align-items: center;
+            padding: 20px 0;
+            border-top: 1px solid #edf0f4;
+        }
+
+        .item-image {
+            width: 115px;
+            height: 105px;
+            object-fit: cover;
+            border-radius: 9px;
+            background: #f0f2f6;
+        }
+
+        .placeholder {
+            width: 115px;
+            height: 105px;
+            border-radius: 9px;
+            background: #f0f2f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #98a3b3;
+            font-size: 12px;
+        }
+
+        .item-info h3 {
+            font-size: 16px;
+            margin-bottom: 9px;
+        }
+
+        .item-info p {
+            font-size: 13px;
+            color: #8490a0;
+            margin-bottom: 8px;
+        }
+
+        .price {
+            font-size: 17px;
+            font-weight: 700;
+            color: #263e67;
+        }
+
+        .remove-btn {
+            border: none;
+            background: transparent;
+            color: #d65a5a;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 8px;
+        }
+
+        .remove-btn:hover {
+            text-decoration: underline;
+        }
+
+        .summary {
+            position: sticky;
+            top: 20px;
+        }
+
+        .summary h2 {
+            font-size: 19px;
+            margin-bottom: 23px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            color: #788495;
+            font-size: 14px;
+            margin-bottom: 17px;
+        }
+
+        .total-row {
+            border-top: 1px solid #e9edf3;
+            padding-top: 20px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+        }
+
+        .total-price {
+            color: #3978db;
+            font-size: 24px;
+        }
+
+        .checkout-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #3978db;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 25px;
+        }
+
+        .checkout-btn:hover {
+            background: #2865c4;
+        }
+
+        .checkout-btn:disabled {
+            background: #aab6c6;
+            cursor: not-allowed;
+        }
+
+        .continue {
+            display: block;
+            text-align: center;
+            color: #3978db;
+            font-size: 14px;
+            margin-top: 18px;
+        }
+
+        .note {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #929cab;
+            margin-top: 18px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 65px 20px;
+        }
+
+        .empty-icon {
+            font-size: 55px;
+            margin-bottom: 20px;
+        }
+
+        .empty h2 {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .empty p {
+            color: #8792a2;
+            margin-bottom: 25px;
+        }
+
+        .shop-btn {
+            display: inline-block;
+            background: #3978db;
+            color: white;
+            padding: 13px 25px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 760px) {
+            .cart-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                padding: 0 20px;
+            }
+
+            .nav-links {
+                gap: 13px;
+                font-size: 12px;
+            }
+
+            .item {
+                grid-template-columns: 85px 1fr auto;
+                gap: 12px;
+            }
+
+            .item-image,
+            .placeholder {
+                width: 85px;
+                height: 85px;
+            }
+
+            .container {
+                margin-top: 35px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <header class="navbar">
+        <a href="/" class="logo">
+            Campus<span>Shop</span>
+        </a>
+
+        <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="/products">Products</a>
+            <a href="/cart" class="active">Cart</a>
+            <a href="/profile">Profile</a>
+        </nav>
+    </header>
+
+    <main class="container">
+
+        <div class="heading">
+            <h1>Shopping Cart</h1>
+            <p>Review your selected products before checkout.</p>
+        </div>
+
+        <% if (notice) { %>
+            <div class="alert success">
+                <%= notice %>
+            </div>
+            <% } %>
+
+                <% if (error) { %>
+                    <div class="alert error">
+                        <%= error %>
+                    </div>
+                    <% } %>
+
+                        <% if (items.length===0) { %>
+
+                            <!-- Empty Cart -->
+                            <section class="cart-panel empty">
+                                <div class="empty-icon">🛒</div>
+                                <h2>Your cart is empty</h2>
+                                <p>You haven't added any products yet.</p>
+                                <a href="/products" class="shop-btn">
+                                    Browse Products
+                                </a>
+                            </section>
+
+                            <% } else { %>
+
+                                <div class="cart-layout">
+
+                                    <!-- Cart Items -->
+                                    <section class="cart-panel">
+
+                                        <div class="panel-title">
+                                            Your Items (<%= items.length %>)
+                                        </div>
+
+                                        <% items.forEach(function(item) { %>
+
+                                            <article class="item">
+
+                                                <div>
+                                                    <% if (item.imageUrl) { %>
+                                                        <img src="<%= item.imageUrl %>" alt="<%= item.title %>"
+                                                            class="item-image"
+                                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                        <div class="placeholder" style="display:none;">
+                                                            No Image
+                                                        </div>
+                                                        <% } else { %>
+                                                            <div class="placeholder">No Image</div>
+                                                            <% } %>
+                                                </div>
+
+                                                <div class="item-info">
+                                                    <h3>
+                                                        <%= item.title %>
+                                                    </h3>
+                                                    <p>Second-hand Product</p>
+                                                    <div class="price">
+                                                        <%= Number(item.price).toFixed(2) %>
+                                                    </div>
+                                                </div>
+
+                                                <form action="/cart/remove/<%= item.productId %>" method="POST">
+                                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                                                    <button type="submit" class="remove-btn">
+                                                        Remove
+                                                    </button>
+                                                </form>
+
+                                            </article>
+
+                                            <% }); %>
+
+                                                <a href="/products" class="continue">
+                                                    ← Continue Shopping
+                                                </a>
+
+                                    </section>
+
+                                    <!-- Order Summary -->
+                                    <aside class="summary">
+
+                                        <h2>Order Summary</h2>
+
+                                        <div class="summary-row">
+                                            <span>Items</span>
+                                            <span>
+                                                <%= items.length %>
+                                            </span>
+                                        </div>
+
+                                        <div class="summary-row">
+                                            <span>Shipping</span>
+                                            <span>To be arranged</span>
+                                        </div>
+
+                                        <div class="total-row">
+                                            <span>Total</span>
+                                            <span class="total-price">
+                                                <%= Number(total).toFixed(2) %>
+                                            </span>
+                                        </div>
+
+                                        <form action="/orders/checkout" method="POST">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                                            <button type="submit" class="checkout-btn">
+                                                Proceed to Checkout
+                                            </button>
+                                        </form>
+
+                                        <p class="note">
+                                            Prices shown are saved when products were added.
+                                            The latest product prices will be checked again at checkout.
+                                        </p>
+
+                                    </aside>
+
+                                </div>
+
+                                <% } %>
+
+    </main>
+
+</body>
+
+</html>

@@ -3,11 +3,13 @@
     <a href="/">Home</a>
     <span>｜ Welcome, <%= currentUser.nickname %></span>
     <a href="/profile">Personal Information</a>
+    <a href="/cart">Cart</a>
+    <a href="/favorites">Favourites</a>
     <a href="/logout">Logout</a>
-  <% } else { %>
-    <a href="/">Home</a>
-    <a href="/login">Login</a>
-    <a href="/register">Register</a>
-  <% } %>
+    <% } else { %>
+      <a href="/">Home</a>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+      <% } %>
 </nav>
 <hr>

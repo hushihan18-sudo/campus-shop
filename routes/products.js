@@ -18,14 +18,17 @@ const categories = [
 ];
 
 // 商品列表
-router.get('/', requireLogin, async (req, res, next) => {
+router.get('/', requireLogin, csrfProtection, async (req, res, next) => {
   try {
     const products = await Product.find({})
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
 
-    res.render('products/index', { products });
+    res.render('products/index', {
+      products,
+      csrfToken: req.csrfToken()
+    });
   } catch (error) {
     next(error);
   }

@@ -73,6 +73,9 @@ const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const { requireLogin } = require('./middleware/auth');
 const productRoutes = require('./routes/products');
+const cartRoutes = require('./routes/cart');
+const cartApiRoutes = require('./routes/cartApi');
+const favoriteRoutes = require('./routes/favorites');
 // ============================================
 // 8. 路由挂载
 // ============================================
@@ -87,6 +90,19 @@ app.get('/', requireLogin, (req, res) => {
 app.use('/', authRoutes);        // /register  /login  /logout
 app.use('/profile', profileRoutes); // /profile（查看 + 修改）
 app.use('/products', productRoutes);
+
+// 购物车页面路由：/cart  /cart/add/:productId  /cart/remove/:productId
+app.use('/cart', cartRoutes);
+
+// 购物车 REST API：GET/POST /api/cart  PUT/DELETE /api/cart/:productId
+app.use('/api/cart', cartApiRoutes);
+
+// 收藏夹页面路由：/favorites  /favorites/toggle
+app.use('/favorites', favoriteRoutes);
+
+// 收藏夹 REST API：GET/POST /api/favorites  DELETE /api/favorites/:productId
+app.use('/api/favorites', favoriteRoutes.apiRouter);
+
 // 404 处理
 app.use((req, res) => {
   res.status(404).send('404 - Page Not Found');

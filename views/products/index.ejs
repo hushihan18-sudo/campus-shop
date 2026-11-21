@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,7 +27,8 @@
       background: white;
     }
 
-    th, td {
+    th,
+    td {
       padding: 14px;
       border-bottom: 1px solid #ddd;
       text-align: left;
@@ -40,62 +42,99 @@
     }
   </style>
 </head>
+
 <body>
   <nav>
     <a href="/">home</a>
 
     <% if (currentUser) { %>
       <a href="/profile">personal information</a>
-    <% } else { %>
-      <a href="/login">login</a>
-      <a href="/register">register</a>
-    <% } %>
+      <% } else { %>
+        <a href="/login">login</a>
+        <a href="/register">register</a>
+        <% } %>
   </nav>
 
   <h1>products</h1>
   <% if (currentUser) { %>
-  <p>
-    <a href="/products/new">Publish a Product</a>
-    |
-    <a href="/products/mine">My Products</a>
-  </p>
-  <% } else { %>
-  <p><a href="/login">Log in to publish a product</a></p>
-  <% } %>
-  <p>Show the latest 50 products</p>
+    <p>
+      <a href="/products/new">Publish a Product</a>
+      |
+      <a href="/products/mine">My Products</a>
+    </p>
+    <% } else { %>
+      <p><a href="/login">Log in to publish a product</a></p>
+      <% } %>
+        <p>Show the latest 50 products</p>
 
-  <% if (products.length === 0) { %>
-    <div class="empty">
-      No products are available yet. Once the first product is published, it will appear here.
-    </div>
-  <% } else { %>
-    <table>
-      <thead>
-        <tr>
-          <th>product name</th>
-          <th>category</th>
-          <th>price</th>
-          <th>status</th>
-        </tr>
-      </thead>
+        <% if (products.length===0) { %>
+          <div class="empty">
+            No products are available yet. Once the first product is published, it will appear here.
+          </div>
+          <% } else { %>
+            <table>
+              <thead>
+                <tr>
+                  <th>product name</th>
+                  <th>category</th>
+                  <th>price</th>
+                  <th>status</th>
+                  <th>action</th>
+                </tr>
+              </thead>
 
-      <tbody>
-        <% products.forEach(product => { %>
-          <tr>
-            <td>
-               <a href="/products/<%= product._id %>">
-                 <%= product.title %>
-               </a>
-            </td>
-            <td><%= product.category %></td>
-            <td>¥<%= Number(product.price).toFixed(2) %></td>
-            <td>
-              <%= product.status === 'sold' ? 'sold ' : 'available' %>
-            </td>
-          </tr>
-        <% }); %>
-      </tbody>
-    </table>
-  <% } %>
+              <tbody>
+                <% products.forEach(product=> { %>
+                  <tr>
+                    <td>
+                      <a href="/products/<%= product._id %>">
+                        <%= product.title %>
+                      </a>
+                    </td>
+
+                    <td>
+                      <%= product.category %>
+                    </td>
+
+                    <td>
+                      ¥<%= Number(product.price).toFixed(2) %>
+                    </td>
+
+                    <td>
+                      <%= product.status==='sold' ? 'sold' : 'available' %>
+                    </td>
+
+                    <td>
+                      <% if (!currentUser) { %>
+
+                        <a href="/login">Login to Add</a>
+
+                        <% } else if (product.status==='sold' ) { %>
+
+                          <span style="color: gray;">Sold Out</span>
+
+                          <% } else if ( String(product.seller)===String(currentUser._id) ) { %>
+
+                            <span style="color: gray;">Your Listing</span>
+
+                            <% } else { %>
+
+                              <form action="/cart/add/<%= product._id %>" method="POST">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                                <button type="submit">
+                                  🛒 Add to Cart
+                                </button>
+                              </form>
+
+                              <% } %>
+                    </td>
+                  </tr>
+                  <% }); %>
+              </tbody>
+
+            </table>
+            <% } %>
 </body>
+
 </html>
