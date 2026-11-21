@@ -17,16 +17,58 @@ const categories = [
   'Other'
 ];
 
-// Product list
+// Product list: search by title and filter by category
 router.get('/', requireLogin, csrfProtection, async (req, res, next) => {
   try {
-    const products = await Product.find({})
+    // Query values must be strings, not arrays or objects
+    if (
+      (req.query.q !== undefined && typeof req.query.q !== 'string') ||
+      (req.query.category !== undefined &&
+        typeof req.query.category !== 'string')
+    ) {
+      return res.status(400).send('Invalid search parameters.');
+    }
+
+    const q = (req.query.q || '').trim();
+    const category = (req.query.category || '').trim();
+
+    if (q.length > 100) {
+      return res.status(400).send(
+        'The search keyword must not exceed 100 characters.'
+      );
+    }
+
+    if (category && !categories.includes(category)) {
+      return res.status(400).send('Please select a valid category.');
+    }
+
+    // Build the query using only allowed fields
+    const filter = {};
+
+    if (q) {
+      // Treat special characters literally, not as regex instructions
+      const escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      filter.title = {
+        $regex: escapedQ,
+        $options: 'i'
+      };
+    }
+
+    if (category) {
+      filter.category = category;
+    }
+
+    const products = await Product.find(filter)
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
 
     res.render('products/index', {
       products,
+      categories,
+      q,
+      selectedCategory: category,
       csrfToken: req.csrfToken()
     });
   } catch (error) {
