@@ -65,12 +65,54 @@
     <% } else { %>
       <p><a href="/login">Log in to publish a product</a></p>
       <% } %>
-        <p>Show the latest 50 products</p>
+        <form action="/products" method="GET" class="search-form">
+  <div>
+    <label for="q">Product name</label>
+    <input
+      type="search"
+      id="q"
+      name="q"
+      value="<%= q %>"
+      maxlength="100"
+      placeholder="Search by product name"
+    >
+  </div>
+
+  <div>
+    <label for="category">Category</label>
+    <select id="category" name="category">
+      <option value="">All categories</option>
+
+      <% categories.forEach(category => { %>
+        <option
+          value="<%= category %>"
+          <%= selectedCategory === category ? 'selected' : '' %>
+        >
+          <%= category %>
+        </option>
+      <% }); %>
+    </select>
+  </div>
+
+  <button type="submit">Search</button>
+  <a href="/products">Reset</a>
+</form>
+
+<p>
+  Showing <%= products.length %> products
+  (up to 50, newest first).
+</p>
 
         <% if (products.length===0) { %>
           <div class="empty">
-            No products are available yet. Once the first product is published, it will appear here.
-          </div>
+  <% if (q || selectedCategory) { %>
+    No products match your search. Try another keyword or category.
+    <a href="/products">Clear filters</a>
+  <% } else { %>
+    No products are available yet. Once the first product is published,
+    it will appear here.
+  <% } %>
+</div>
           <% } else { %>
             <table>
               <thead>
